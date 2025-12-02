@@ -1,8 +1,12 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/igni-engine/igni_input_core/main/assets/vector.svg" width="180"/>
+</p>
+
 # IGNI INPUT CORE
 
-IGNI INPUT CORE define los contratos mínimos necesarios para la máxima compatibilidad con el futuro motor de videojuegos IGNI ENGINE.
+IGNI INPUT CORE define los contratos mínimos necesarios para la máxima compatibilidad con el futuro motor de videojuegos **IGNI ENGINE**.
 
-Este crate **no implementa ningún comportamiento concreto**.
+Este crate **no implementa ningún comportamiento concreto**.  
 Su propósito exclusivo es ofrecer **interfaces (traits)** que garantizan:
 
 * compatibilidad entre múltiples backends de entrada,
@@ -77,9 +81,8 @@ Ejemplos:
 
 La capa se divide en dos traits:
 
-#### a) ProcessingLayerState
+#### a) ProcessingLayerState (solo lectura)
 
-Solo lectura.
 Permite consultar:
 
 * estados de las teclas,
@@ -89,7 +92,7 @@ Permite consultar:
 
 No muta nada.
 
-#### b) ProcessingLayerControl
+#### b) ProcessingLayerControl (mutación)
 
 Permite:
 
@@ -104,10 +107,8 @@ Esta separación garantiza seguridad en tiempo de compilación y claridad en la 
 
 ## 3. Mapping Layer (Capa 2)
 
-La capa más abstracta y orientada a lógica de juego.
+La capa más abstracta y orientada a lógica de juego.  
 Permite construir esquemas de control basados en **acciones**, **contextos** y **asignaciones dinámicas**.
-
-A diferencia de la Processing Layer, esta capa opera sobre conceptos semánticos y configurables.
 
 Ejemplos:
 
@@ -132,9 +133,8 @@ Ejemplos:
 
 La capa define dos traits principales:
 
-#### a) MappingLayerState
+#### a) MappingLayerState (solo lectura)
 
-Solo lectura.
 Permite consultar:
 
 * contexto activo,
@@ -147,9 +147,8 @@ Permite consultar:
 
 Retorna slices y referencias para evitar asignaciones innecesarias.
 
-#### b) MappingLayerControl
+#### b) MappingLayerControl (mutación completa)
 
-Mutación completa del sistema.
 Permite:
 
 * cambiar de contexto activo,
@@ -167,7 +166,7 @@ Esta capa es la base de:
 * las configuraciones de usuario,
 * perfiles de control,
 * sistemas de accesibilidad,
-* mapeo dinámico en runtime, si está permitido.
+* mapeo dinámico en runtime (si está permitido).
 
 ---
 
@@ -175,17 +174,17 @@ Esta capa es la base de:
 
 IGNI INPUT CORE está diseñado bajo cuatro principios:
 
-1. Separación estricta de responsabilidades
+1. **Separación estricta de responsabilidades**  
    Cada capa hace solo lo que debe hacer, sin conocimiento innecesario de otras capas.
 
-2. Máximo rendimiento
+2. **Máximo rendimiento**  
    La lectura del estado debe ser extremadamente rápida, evitando asignaciones y copias.
 
-3. Extensibilidad total
+3. **Extensibilidad total**  
    Cualquier backend (Windows, Linux evdev, XInput, gamepad, VR) puede cumplir los contratos sin restricciones artificiales.
 
-4. Determinismo y claridad
-   Los traits definen explícitamente qué se puede hacer y qué no, para evitar ambigüedades en plataformas y backends.
+4. **Determinismo y claridad**  
+   Los traits definen explícitamente qué se puede hacer y qué no, evitando ambigüedades entre plataformas.
 
 ---
 
@@ -198,8 +197,43 @@ Este crate define exclusivamente los **contratos** necesarios para construir:
 * el editor,
 * el motor en sí.
 
-No contiene implementación alguna.
+No contiene implementación alguna.  
 Las implementaciones se desarrollarán en crates separados, manteniendo el núcleo completamente genérico y desacoplado.
 
 ---
 
+# IGNI Trademarks
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/igni-engine/igni_input_core/main/assets/vector.svg" width="140"/>
+</p>
+
+The names **"IGNI"**, **"IGNI Engine"**, **"IGNI Input"**, **"IGNI Game Core"**, and all associated logos, branding, and visual identity are **trademarks of Cristian Valencia**.
+
+These trademarks are **not licensed** under the MIT license that applies to the source code in this repository.
+
+### Permitted Use
+
+You may:
+
+* Use IGNI libraries, source code, and APIs in your own projects, including commercial ones.
+* Modify and redistribute the code under MIT, as long as you **do not use the IGNI trademarks** to imply endorsement.
+
+### Restricted Use
+
+You may **NOT**:
+
+* Use the IGNI name or logos for any engine, framework, or product that may be confused with IGNI ENGINE.
+* Present modified or forked versions as official IGNI products.
+* Use "IGNI" in the name of your engine or tools without written permission.
+
+### Allowed Descriptions
+
+You may state factually:
+
+* “This project is based on IGNI Input Core.”
+* “This game uses the IGNI Engine.”
+
+### Ownership
+
+All rights to the IGNI name, brand, and visual identity belong exclusively to **Cristian Valencia**.

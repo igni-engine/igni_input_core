@@ -1,4 +1,6 @@
 # IGNI Trademarks
+https://github.com/igni-engine/igni_input_core/tree/main/assets
+
 
 
 The names "IGNI", "IGNI Engine", "IGNI Input", "IGNI Game Core", and any
