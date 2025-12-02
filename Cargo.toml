@@ -2,13 +2,22 @@
 name = "igni_input_core"
 version = "0.1.0"
 edition = "2024"
-
-[dependencies]
-
-
+authors = ["IGNI Engine Team <igniengine@outlook.com>"]
+license = "MIT"
+description = "Core contracts for the IGNI Engine input system. Defines traits for raw input, processing layers, and mapping layers with zero implementation."
+repository = "https://github.com/igni-engine/igni_input_core.git"
+readme = "README.md"
+keywords = ["input", "game-engine", "rust", "igni", "mapping", "input-system"]
+categories = ["game-engines", "api-bindings", "development-tools"]
+homepage = "https://github.com/igni-engine/igni_input_core"
+documentation = "https://docs.rs/igni_input_core"
+exclude = ["target/", ".vscode/", "*.log"]
 
 
 [features]
-default = ["history","IE_maping"]
+default = []
 history = []
 IE_maping = []
+
+
+[dependencies]
