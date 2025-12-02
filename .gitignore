@@ -1,0 +1,22 @@
+# Directorios generados por cargo
+/target/
+
+# Archivos de lock no necesarios en librerías
+Cargo.lock
+
+# Archivos temporales del editor
+*.log
+*.tmp
+*.swp
+*.swo
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos específicos de VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
