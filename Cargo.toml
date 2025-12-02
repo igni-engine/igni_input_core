@@ -1,0 +1,14 @@
+[package]
+name = "igni_input_core"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+
+
+
+
+[features]
+default = ["history","IE_maping"]
+history = []
+IE_maping = []
