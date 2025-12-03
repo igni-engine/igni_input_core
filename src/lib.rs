@@ -74,3 +74,16 @@
 //! ---
 
 pub mod layers;
+
+
+
+
+///---------------------------------------------------------------------------
+/// ## TRAITS PRINCIPALES
+///Re-exportar los contratos principales para facilitar su uso externo.
+/// Estos contratos son el corazon del input del engine y deben estar
+/// disponibles para cualquier crate que implemente un backend o interactue
+/// con el sistema de entrada.
+/// ---------------------------------------------------------------------------
+pub mod contracts;
+pub use contracts::{game_contract, runtime_contract};

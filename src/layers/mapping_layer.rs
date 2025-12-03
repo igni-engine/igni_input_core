@@ -1,4 +1,4 @@
-use crate::layers::raw_layer::KeyCodeExt;
+use crate::layers::{history::HistoryStateExt, processing_layer::ProcessingLayerState, raw_layer::KeyCodeExt};
 
 
 // -----------------------------------------------------------------------------
@@ -70,7 +70,7 @@ pub trait MappingLayerState {
     fn key_for_action(&self, action: &str) -> Option<Self::KeyCode>;
 
     /// Igual que `key_for_action`, pero restringido a un contexto específico.
-    fn key_for_action_in(&self,ctx: &Self::Ctx,action: &str,) -> Option<Self::KeyCode>;
+    fn key_for_action_in(&self,ctx: &Self::Ctx,action: &str) -> Option<Self::KeyCode>;
 
     /// Indica si una acción existe en el contexto activo.
     fn has_action(&self, action: &str) -> bool;
@@ -104,7 +104,7 @@ pub trait MappingLayerState {
     fn actions_for_key(&self, key: &Self::KeyCode) -> &[String];
 
     /// Igual que `actions_for_key`, pero en un contexto específico.
-    fn actions_for_key_in(&self,ctx: &Self::Ctx,key: &Self::KeyCode,) -> &[String];
+    fn actions_for_key_in(&self,ctx: &Self::Ctx,key: &Self::KeyCode) -> &[String];
 
     /// Indica si una tecla está asignada a una o más acciones en el contexto activo.
     fn is_key_mapped(&self, key: &Self::KeyCode) -> bool;
@@ -123,7 +123,7 @@ pub trait MappingLayerState {
     /// Indica si un contexto específico está habilitado en el sistema.
     /// retorna `true` si el contexto está activo y puede ser usado.
     /// retorna `false` si el contexto está deshabilitado o no existe.
-    fn is_context_enabled(&self,ctx : &Self::Ctx) -> bool;
+    fn is_context_enabled(&self, ctx : &Self::Ctx) -> bool;
 
 
     // -------------------------------------------------------------------------
@@ -158,117 +158,240 @@ pub trait MappingLayerControl {
     type KeyCode: KeyCodeExt;
     type Ctx: ContextId;
 
+    // -------------------------------------------------------------------------
+    // CONTEXT MANAGEMENT
+    // -------------------------------------------------------------------------
 
-    /// Cambia el contexto activo.
+    /// Establece el contexto activo del sistema.
     ///
     /// Retorna:
-    /// - `true` si el contexto existe y fue activado,
-    /// - `false` si no existe.
+    /// - `true` si el contexto existe y fue establecido con éxito.
+    /// - `false` si el contexto no existe.
+    ///
+    /// Cambiar el contexto afecta qué acciones y bindings estarán vigentes
+    /// durante la resolución del frame.
     fn set_current_context(&mut self, ctx: Self::Ctx) -> bool;
 
 
-    /// Asigna una tecla a una acción dentro del contexto activo.
+    // -------------------------------------------------------------------------
+    // ACTION → KEY (MAPEO BÁSICO)
+    // -------------------------------------------------------------------------
+
+    /// Asigna una tecla a una acción dentro del **contexto activo**.
     ///
-    /// Retorna false si la acción no existe.
+    /// Si la acción no existe en el contexto actual, retorna `false`.
+    ///
+    /// Si ya existía una asignación previa, se sobrescribe.
     fn map_action(&mut self, action: &str, key: Self::KeyCode) -> bool;
 
-    /// Elimina la asignación de una acción dentro del contexto activo.
+    /// Elimina la asignación de una acción dentro del **contexto activo**.
+    ///
+    /// Retorna:
+    /// - `true` si la acción existía y fue desasignada.
+    /// - `false` si la acción no existe.
     fn unmap_action(&mut self, action: &str) -> bool;
 
-    /// Asigna una tecla a una acción dentro de un contexto concreto.
-    fn map_action_in(&mut self,ctx: &Self::Ctx,action: &str,key: Self::KeyCode,) -> bool;
 
-    /// Desasigna una acción dentro de un contexto específico.
+    // -------------------------------------------------------------------------
+    // ACTION → KEY (MAPEO EN CONTEXTO ESPECÍFICO)
+    // -------------------------------------------------------------------------
+
+    /// Asigna una tecla a una acción dentro de un contexto específico.
+    ///
+    /// Retorna `true` solo si:
+    /// - el contexto existe,
+    /// - la acción existe en dicho contexto.
+    fn map_action_in(&mut self,ctx: &Self::Ctx,action: &str,key: Self::KeyCode) -> bool;
+
+    /// Elimina la asignación de una acción dentro de un contexto específico.
+    ///
+    /// Retorna `true` si la acción existía y fue desasignada.
     fn unmap_action_in(&mut self, ctx: &Self::Ctx, action: &str) -> bool;
 
-    /// Asigna una tecla a una acción en todos los contextos en los que exista.
+
+    // -------------------------------------------------------------------------
+    // ACTION → KEY (OPERACIONES GLOBALES)
+    // -------------------------------------------------------------------------
+
+    /// Asigna una tecla a una acción en **todos los contextos donde exista**.
+    ///
+    /// Útil para accesibilidad, UI global, o configuraciones compartidas.
     fn map_action_all(&mut self, action: &str, key: Self::KeyCode) -> bool;
 
-    /// Quita la asignación de una acción en todos los contextos en los que exista.
+    /// Elimina la asignación de una acción en **todos los contextos donde exista**.
     fn unmap_action_all(&mut self, action: &str) -> bool;
 
 
-    /// Elimina un contexto completo.
+    // -------------------------------------------------------------------------
+    // CONTEXT CREATION / DELETION
+    // -------------------------------------------------------------------------
+
+    /// Elimina un contexto completo del sistema.
+    ///
+    /// Retorna:
+    /// - `true` si el contexto existía y fue eliminado.
+    /// - `false` si no existía.
+    ///
+    /// NOTA: El contexto activo debe cambiarse previamente si coincide
+    /// con el eliminado.
     fn remove_context(&mut self, ctx: &Self::Ctx) -> bool;
 
     /// Crea un nuevo contexto vacío.
+    ///
+    /// Retorna:
+    /// - `true` si el contexto fue creado,
+    /// - `false` si ya existía.
     fn add_context(&mut self, ctx: Self::Ctx) -> bool;
 
 
+    // -------------------------------------------------------------------------
+    // ACTION RENAMING
+    // -------------------------------------------------------------------------
+
     /// Renombra una acción dentro del contexto activo.
+    ///
+    /// Retorna `true` si:
+    /// - la acción antigua existe,
+    /// - el nuevo nombre no está en uso.
     fn rename_action(&mut self, old_action: &str, new_action: &str) -> bool;
 
     /// Renombra una acción dentro de un contexto específico.
-    fn rename_action_in(&mut self,ctx: &Self::Ctx,old_action: &str,new_action: &str,) -> bool;
+    fn rename_action_in(&mut self,ctx: &Self::Ctx,old_action: &str,new_action: &str) -> bool;
 
-    /// Renombra una acción en todos los contextos donde exista.
-    fn rename_action_all(&mut self,old_action: &str,new_action: &str,) -> bool;
+    /// Renombra una acción en **todos los contextos donde exista**.
+    fn rename_action_all(&mut self,old_action: &str,new_action: &str) -> bool;
 
 
-    /// Crea una acción nueva sin tecla asignada dentro del contexto activo.
+    // -------------------------------------------------------------------------
+    // ACTION CREATION
+    // -------------------------------------------------------------------------
+
+    /// Crea una acción nueva sin tecla asignada dentro del **contexto activo**.
+    ///
+    /// Retorna:
+    /// - `true` si fue creada,
+    /// - `false` si ya existía.
     fn add_action(&mut self, action: &str) -> bool;
 
-    /// Crea una acción nueva dentro de un contexto específico.
+    /// Crea una acción dentro de un contexto específico.
     fn add_action_in(&mut self, ctx: &Self::Ctx, action: &str) -> bool;
 
-    /// Crea una acción nueva en todos los contextos existentes.
+    /// Crea una acción dentro de **todos los contextos existentes**.
     fn add_action_all(&mut self, action: &str) -> bool;
 
 
-    /// Elimina una acción dentro del contexto activo.
+    // -------------------------------------------------------------------------
+    // ACTION DELETION
+    // -------------------------------------------------------------------------
+
+    /// Elimina una acción del contexto activo.
+    ///
+    /// Retorna `true` solo si la acción existía.
     fn delete_action(&mut self, action: &str) -> bool;
 
     /// Elimina una acción dentro de un contexto específico.
     fn delete_action_in(&mut self, ctx: &Self::Ctx, action: &str) -> bool;
 
-    /// Elimina una acción en todos los contextos donde exista.
+    /// Elimina una acción en **todos los contextos donde exista**.
     fn delete_action_all(&mut self, action: &str) -> bool;
 
 
-    /// Elimina todas las acciones dentro del contexto activo.
+    // -------------------------------------------------------------------------
+    // BULK ACTION OPERATIONS
+    // -------------------------------------------------------------------------
+
+    /// Elimina **todas** las acciones del contexto activo.
+    ///
+    /// Retorna `true` si el contexto tenía acciones.
     fn delete_all_actions(&mut self) -> bool;
 
     /// Elimina todas las acciones dentro de un contexto específico.
     fn delete_all_actions_in(&mut self, ctx: &Self::Ctx) -> bool;
 
 
-    /// Clona un contexto existente hacia uno nuevo.
+    // -------------------------------------------------------------------------
+    // CONTEXT DUPLICATION
+    // -------------------------------------------------------------------------
+
+    /// Clona completamente un contexto existente en otro.
+    ///
+    /// - `to`: nuevo contexto destino (debe no existir o ser sobreescrito).
+    /// - `from`: contexto origen.
+    ///
+    /// Retorna `true` si la operación fue exitosa.
     fn clone_context(&mut self, to: &Self::Ctx, from: Self::Ctx) -> bool;
 
 
+    // -------------------------------------------------------------------------
+    // CONTEXT RESET
+    // -------------------------------------------------------------------------
 
-
-    /// resetea el contexto actiov a estado vacio.
-    /// esto desasigna todas las acciones de sus respectivas teclas.
-    /// no elimina las acciones, las deja en esta "sin asignar".
+    /// Resetea el contexto activo a estado vacío:
+    /// - elimina **todas** las asignaciones,
+    /// - conserva las acciones pero sin teclas asociadas.
     fn reset_context(&mut self) -> bool;
 
-    /// resetea un contexto especifico a estado vacio.
+    /// Resetea un contexto específico a estado vacío.
     fn reset_context_in(&mut self, ctx: &Self::Ctx) -> bool;
 
-    /// resetea todos los contextos a estado vacio.
+    /// Resetea **todos** los contextos del sistema.
     fn reset_all_contexts(&mut self);
 
 
+    // -------------------------------------------------------------------------
+    // CONTEXT ENABLE / DISABLE
+    // -------------------------------------------------------------------------
+
     /// Habilita un contexto específico.
-    /// Retorna `true` si el contexto fue agregado o ya existía.
-    /// Retorna `false` si no existe ese contexto,
+    ///
+    /// Un contexto habilitado puede ser utilizado para mapeo
+    /// y para resolución de acciones.
     fn enable_context(&mut self, ctx: &Self::Ctx) -> bool;
 
-
-    /// Deshabilita un contexto específico, inhabilitandolo del sistema pero sin eliminarlo.
-    /// Retorna `true` si el contexto existía y fue eliminado.
+    /// Deshabilita un contexto sin eliminarlo.
+    ///
+    /// Un contexto deshabilitado:
+    /// - no participa en resolución,
+    /// - no puede ser activado como actual.
     fn disable_context(&mut self, ctx: &Self::Ctx) -> bool;
 
 
+    // -------------------------------------------------------------------------
+    // IMPORT (opcional)
+    // -------------------------------------------------------------------------
 
+    /// Importa una configuración serializable de mapeo.
+    ///
+    /// Disponible solo bajo la feature `IE_maping`.
     #[cfg(feature = "IE_maping")]
-    /// Importa una configuración serializable en el sistema de mapeo.
     fn import_key_mappings<T>(&mut self, data: T);
 
+    // -------------------------------------------------------------------------
+    // FRAME CYCLE — Agregado según solicitaste
+    // -------------------------------------------------------------------------
 
+    /// Preparación del frame de mapeo.
+    ///
+    /// - Limpia el estado final del frame anterior.
+    /// - Reinicia buffers internos.
+    /// - No se resuelven acciones todavía.
+    fn begin_frame(&mut self);
 
+    /// Resolución de acciones del frame.
+    ///
+    /// Combina información proveniente de:
+    /// - ProcessingLayerState (inmediato)
+    /// - HistoryStateExt (temporal)
+    ///
+    /// Para producir:
+    /// - pressed(action)
+    /// - released(action)
+    /// - held(action)
+    /// - action_value(action)
+    fn resolve_actions(&mut self,processing: &impl ProcessingLayerState<KeyCode = Self::KeyCode>,history: &impl HistoryStateExt<KeyCode = Self::KeyCode>);
 
-
-
+    /// Finalización del frame:
+    /// - Sella los resultados para lectura (`MappingLayerState`)
+    /// - Limpia buffers temporales
+    fn end_frame(&mut self);
 }

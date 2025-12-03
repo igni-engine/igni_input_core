@@ -4,24 +4,54 @@ use crate::layers::raw_layer::{KeyCodeExt, KeyStateExt};
 
 
 /// Control del historial de entrada.
-/// 
-/// Esta interfaz se encarga únicamente de la administración del historial.
-/// No define lógica de análisis ni interpretación temporal; esas funciones
-/// pertenecen al estado y a las capas superiores.
+///
+/// Esta capa registra eventos crudos directamente desde la Raw Layer.
+/// NO interpreta estados (eso lo hace Processing).
+/// NO resuelve acciones (eso lo hace Mapping).
+///
+/// Su función principal es almacenar información temporal relevante:
+/// - timestamps de presión y liberación
+/// - duración acumulada de una tecla en estado `Pressed`
+/// - secuencia cronológica de eventos (útil para combos, replay, debug)
 pub trait HistoryControlExt {
 
     type KeyCode: KeyCodeExt;
     type KeyState: KeyStateExt;
 
-    /// Agrega un nuevo evento al historial.
-    fn add_event(&mut self, key: impl Into<Self::KeyCode>, state: impl Into<Self::KeyState>, timestamp: Duration);
-
-    /// Elimina todos los eventos almacenados en el historial.
+    /// Llamado al inicio del frame.
     ///
-    /// Esto deja el historial en estado completamente vacío.
+    /// Se recomienda:
+    /// - mover buffers temporales (`now → prev`)
+    /// - limpiar marcadores históricos del frame anterior
+    /// - preparar acumuladores de duración
+    fn begin_frame(&mut self);
+
+    /// Registra un evento crudo proveniente de la Raw Layer.
+    ///
+    /// Parámetros:
+    /// - `key`: código de tecla o input
+    /// - `state`: nuevo estado (`Pressed`, `Released`, etc.)
+    /// - `timestamp`: instante del evento
+    ///
+    /// Este método:
+    /// - almacena el evento en el historial
+    /// - actualiza el tiempo de `held` si aplica
+    /// - actualiza timestamps de actividad
+    fn add_event(&mut self,key: impl Into<Self::KeyCode>, state: impl Into<Self::KeyState>,timestamp: Duration,);
+
+    /// Llamado al final del frame.
+    ///
+    /// Este método debe:
+    /// - consolidar duraciones (`held_duration`)
+    /// - limpiar eventos transitorios si aplica
+    /// - cerrar el registro del frame
+    fn end_frame(&mut self);
+
+    /// Elimina todo el historial registrado.
+    ///
+    /// Deja la capa en estado completamente vacío.
     fn clear(&mut self);
 }
-
 
 /// Consultas de estado y funciones de análisis temporal sobre el historial
 /// de entrada.

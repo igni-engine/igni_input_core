@@ -110,16 +110,13 @@
 //! - [`raw_layer`] — Traits de la capa cruda (códigos, estados, eventos).
 //! - [`processing_layer`] — Estado procesado del frame y control mutante del procesamiento.
 //! - [`mapping_layer`] — Acciones, contextos y mapeos.
+//! - [`history`] — Herramientas para historial y análisis temporal del input.
 //!
-//! Si está habilitada la feature:
-//! - [`history`] — Herramientas opcionales de historial temporal para la capa de procesamiento.
-//!
+
 //! Cada módulo contiene exclusivamente **definiciones de traits**.  
 //! No se incluye ninguna implementación real dentro de este crate.
 
 pub mod raw_layer;
 pub mod mapping_layer;
 pub mod processing_layer;
-
-#[cfg(feature = "history")]
 pub mod history;
