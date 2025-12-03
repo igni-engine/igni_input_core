@@ -38,17 +38,8 @@ use crate::layers::raw_layer::{KeyCodeExt, KeyEventExt, KeyStateExt};
 /// - deben ejecutarse una vez por frame.
 /// ---------------------------------------------------------------------------
 pub trait ProcessingLayerControl {
+    
     type Event: KeyEventExt;
-
-    /// Procesa los eventos crudos acumulados del frame.
-    ///
-    /// Este método debe:
-    /// - actualizar el estado actual (`now`)
-    /// - registrar timestamps de presión y liberación
-    /// - preparar información para las consultas en `ProcessingLayerState`
-    ///
-    /// *Importante:* no debe mover `now → prev`, eso se hace en `begin_frame`.
-    fn update(&mut self, events: &[Self::Event]);
 
     /// Restablece completamente el estado procesado.
     ///
@@ -60,6 +51,17 @@ pub trait ProcessingLayerControl {
     ///
     /// Útil al cambiar de escena, reiniciar niveles, o restaurar foco de ventana.
     fn reset(&mut self);
+
+    /// Procesa los eventos crudos acumulados del frame.
+    ///
+    /// Este método debe:
+    /// - actualizar el estado actual (`now`)
+    /// - registrar timestamps de presión y liberación
+    /// - preparar información para las consultas en `ProcessingLayerState`
+    ///
+    /// *Importante:* no debe mover `now → prev`, eso se hace en `begin_frame`.
+    fn update(&mut self, events: &[Self::Event]);
+
 
     /// Debe ser llamado al inicio del frame.
     ///
